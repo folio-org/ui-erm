@@ -37,7 +37,7 @@ export default class Agreements extends React.Component {
     sortDirection: ['asc', 'desc'],
   };
 
-  onSort = (e, meta) => {
+  onSort = (_, meta) => {
     if (!this.sortMap[meta.name]) return;
 
     let {
@@ -56,13 +56,22 @@ export default class Agreements extends React.Component {
     this.setState({ sortOrder, sortDirection });
   }
 
+  sortMap = {
+    name: e => e?.owner?.name,
+    type: e => e?.owner?.agreementStatus?.label,
+  };
+
   renderEntitlementAgreements = () => {
-    const { entitlements = [] } = this.props.data;
-    const { headline, isEmptyMessage, visibleColumns } = this.props;
+    const {
+      data: { entitlements = [] },
+      headline,
+      isEmptyMessage,
+      visibleColumns
+    } = this.props;
 
     const {
       sortOrder,
-      sortDirection,
+      sortDirection
     } = this.state;
 
     // eslint-disable-next-line no-undef
@@ -108,11 +117,6 @@ export default class Agreements extends React.Component {
       :
       <Spinner />;
   }
-
-  sortMap = {
-    name: e => e?.owner?.name,
-    type: e => e?.owner?.agreementStatus?.label,
-  };
 
   render() {
     const {

@@ -89,7 +89,7 @@ export default class PackageContents extends React.Component {
 
   visibleColumns = ['name', 'platform', 'coverage', 'accessStart', 'accessEnd'];
 
-  onSort = (e, meta) => {
+  onSort = (_, meta) => {
     if (!this.sortMap[meta.name]) return;
 
     let {
@@ -108,12 +108,21 @@ export default class PackageContents extends React.Component {
     this.setState({ sortOrder, sortDirection });
   }
 
-  renderList = (packageContents, packageContentsCount, sortDirection, sortOrder) => {
+  renderList = (packageContents, packageContentsCount) => {
+    const {
+      sortOrder,
+      sortDirection,
+    } = this.state;
+
+    // eslint-disable-next-line no-undef
+    const contentData = _.orderBy(packageContents,
+      [this.sortMap[sortOrder[0]], this.sortMap[sortOrder[1]]], sortDirection);
+
     return (
       <MultiColumnList
         columnMapping={this.columnMapping}
         columnWidths={this.columnWidths}
-        contentData={packageContents}
+        contentData={contentData}
         formatter={this.formatter}
         id="package-contents-list"
         interactive={false}
@@ -169,16 +178,6 @@ export default class PackageContents extends React.Component {
       open,
     } = this.props;
 
-    const {
-      sortOrder,
-      sortDirection,
-    } = this.state;
-
-    // eslint-disable-next-line no-undef
-    const contentData = _.orderBy(packageContents,
-      [this.sortMap[sortOrder[0]], this.sortMap[sortOrder[1]]], sortDirection);
-
-
     return (
       <Accordion
         displayWhenClosed={this.renderBadge()}
@@ -192,7 +191,7 @@ export default class PackageContents extends React.Component {
       >
         {this.renderFilterButtons()}
         {packageContents ? (
-          this.renderList(contentData, packageContentsCount, sortDirection, sortOrder)
+          this.renderList(packageContents, packageContentsCount)
         ) : (
           <Spinner />
         )}
