@@ -189,12 +189,12 @@ class EResourceViewRoute extends React.Component {
 
   isLoading = () => {
     const { match, resources } = this.props;
-
+    const { manifest } = EResourceViewRoute;
     return (
-      (match.params.id !== resources?.eresource?.records?.[0]?.id) &&
-      ((resources?.eresource?.isPending ?? true) ||
-      (resources?.packageContents?.isPending ?? true) ||
-      (resources?.entitlementOptions?.isPending ?? true))
+      match.params.id !== resources?.eresource?.records?.[0]?.id &&
+      Object.keys(manifest).some(
+        key => manifest[key].type === 'okapi' && (resources?.[key]?.isPending ?? true) // check if any of the okapi resource is in pending
+      )
     );
   }
 
