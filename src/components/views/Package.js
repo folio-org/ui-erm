@@ -39,18 +39,18 @@ export default class Package extends React.Component {
   }
 
   getInitialAccordionsState = () => {
-    const { data: { entitlements, packageContents } } = this.props;
+    const { data: { entitlements } } = this.props;
 
     return {
       eresourceAgreements: !isEmpty(entitlements),
       notes: true,
-      packageContents: !isEmpty(packageContents),
+      packageContents: true,
     };
   }
 
   render() {
     const { data, handlers } = this.props;
-    // console.log(this.getInitialAccordionsState(), 'lavada');
+
     return (
       <div id="eresource-package">
         <PackageInfo {...this.getSectionProps('info')} />
@@ -60,7 +60,7 @@ export default class Package extends React.Component {
               <ExpandAllButton />
             </Col>
           </Row>
-          <AccordionSet initialStatus={this.getInitialAccordionsState()}>
+          <AccordionSet>
             <Agreements
               {...this.getSectionProps('eresourceAgreements')}
               isEmptyMessage={<FormattedMessage id="ui-agreements.emptyAccordion.noAgreementsPackage" />}

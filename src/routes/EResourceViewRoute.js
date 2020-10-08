@@ -59,11 +59,13 @@ class EResourceViewRoute extends React.Component {
       },
       params: {
         filters: 'pkg.id==:{id}',
-        sort: 'pti.titleInstance.name;asc',
+        sort: 'pti.titleInstance.%{packageContentsSortOrder};%{packageContentsSortDirection}',
         stats: 'true',
       },
     },
     query: {},
+    packageContentsSortDirection: { initialValue: 'asc' },
+    packageContentsSortOrder: { initialValue: 'name' },
     entitlementsCount: { initialValue: resultCount.INITIAL_RESULT_COUNT },
     packageContentsFilter: { initialValue: 'current' },
     packageContentsOffset: { initialValue: 0 },
@@ -185,17 +187,22 @@ class EResourceViewRoute extends React.Component {
     mutator.query.update({ helper: nextHelper });
   }
 
+  handleSort = (_, meta) => {
+    const { mutator, resources } = this.props;
+
+    const packageContentsSortDirection = resources.packageContentsSortDirection === 'asc' ? 'desc' : 'asc';
+    mutator.packageContentsSortDirection.replace(packageContentsSortDirection);
+    mutator.packageContentsSortOrder.replace(meta.name);
+  }
+
   handleToggleTags = () => {
     this.handleToggleHelper('tags');
   }
 
   isLoading = () => {
     const { match, resources } = this.props;
-    const { manifest } = EResourceViewRoute;
     return (match.params.id !== resources?.eresource?.records?.[0]?.id &&
-      (resources?.eresource?.isPending ?? true)) || Object.keys(manifest).some(
-      key => manifest[key].type === 'okapi' && (resources?.[key]?.isPending ?? true) // check if any of the okapi resource is in pending
-    );
+      (resources?.eresource?.isPending ?? true));
   }
 
   getPackageContentsRecordsCount() {
@@ -209,6 +216,7 @@ class EResourceViewRoute extends React.Component {
   getPackageContentsRecords = () => {
     const { resources, match } = this.props;
     const packageContentsUrl = get(resources, 'packageContents.url', '');
+
 
     // If a new eresource is selected or if the filter has changed return undefined
     return (packageContentsUrl.indexOf(`${match.params.id}`) === -1 ||
@@ -247,6 +255,8 @@ class EResourceViewRoute extends React.Component {
           packageContentsCount: this.getPackageContentsRecordsCount(),
           relatedEntitlements: this.getRecords('relatedEntitlements'),
           searchString: this.props.location.search,
+          packageContentsSortDirection: resources?.packageContentsSortDirection,
+          packageContentsSortOrder: resources?.packageContentsSortOrder
         }}
         handlers={{
           ...handlers,
@@ -256,6 +266,7 @@ class EResourceViewRoute extends React.Component {
           onClose: this.handleClose,
           onEdit: this.handleEdit,
           onEResourceClick: this.handleEResourceClick,
+          onSort: this.handleSort,
           onToggleTags: tagsEnabled ? this.handleToggleTags : undefined,
         }}
         helperApp={(eresource) => this.getHelperApp(eresource)}

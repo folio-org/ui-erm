@@ -87,9 +87,13 @@ export default class PackageContents extends React.Component {
         id="package-contents-list"
         interactive={false}
         maxHeight={800}
+        nonInteractiveHeaders={['coverage', 'accessStart', 'accessEnd']}
+        onHeaderClick={this.props.handlers.onSort}
         onNeedMoreData={this.props.onNeedMorePackageContents}
         pageAmount={resultCount.RESULT_COUNT_INCREMENT}
         pagingType="click"
+        sortDirection={`${this.props.data.packageContentsSortDirection}ending`}
+        sortOrder={this.props.data.packageContentsSortOrder}
         totalCount={packageContentsCount}
         virtualize
         visibleColumns={this.visibleColumns}
