@@ -1,4 +1,5 @@
 @Library ('kifolio') _
 
-buildStripesApp {
-}
+Map args=[:]
+
+buildStripesApp(args)
