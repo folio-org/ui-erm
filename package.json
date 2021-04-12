@@ -27,13 +27,11 @@
     "test-custom-coverage": "stripes test nightmare --run custom-coverage",
     "test-hide-eresources-func": "stripes test nightmare --run hide-eresources-func",
     "test-supplement": "stripes test nightmare --run supplement",
-
     "test-linked-licenses": "stripes test nightmare --run linked-licenses",
     "test-license-terms": "stripes test nightmare --run license-terms",
-
     "test-ekb-int": "stripes test nightmare --run ekb-int",
-
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "useAlternateRepo": "node useAlternateRepo"
   },
   "devDependencies": {
     "@folio/eslint-config-stripes": "^5.3.1",

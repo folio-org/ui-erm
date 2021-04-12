@@ -2,4 +2,6 @@
 
 Map args=[:]
 
+// yarn --verbose publish --non-interactive --new-version 2.5.0
+//
 buildStripesApp(args)
