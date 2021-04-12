@@ -3,5 +3,6 @@
 Map args=[:]
 
 // yarn --verbose publish --non-interactive --new-version 2.5.0
-//
+// yarn run setPublishRegistry -- "https://nexus.libsdev.k-int.com/repository/libsdev-npm-hosted/"
+
 buildStripesApp(args)

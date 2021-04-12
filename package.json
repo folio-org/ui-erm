@@ -31,7 +31,7 @@
     "test-license-terms": "stripes test nightmare --run license-terms",
     "test-ekb-int": "stripes test nightmare --run ekb-int",
     "lint": "eslint src",
-    "useAlternateRepo": "node useAlternateRepo"
+    "setPublishRegistry": "node useAlternateRepo"
   },
   "devDependencies": {
     "@folio/eslint-config-stripes": "^5.3.1",
