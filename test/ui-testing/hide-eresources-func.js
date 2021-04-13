@@ -1,4 +1,4 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 const AgreementCRUD = require('./agreement-crud');
 
 module.exports.test = (uiTestCtx) => {
@@ -61,10 +61,10 @@ module.exports.test = (uiTestCtx) => {
 
       it('should confirm visibility of E-Resources page elements', done => {
         nightmare
-          .wait('#accordion-toggle-button-eresourcesAgreementLines')
-          .click('#accordion-toggle-button-eresourcesAgreementLines')
+          .wait('#accordion-toggle-button-lines')
+          .click('#accordion-toggle-button-lines')
           .evaluate(() => {
-            if (!document.getElementById('eresources')) throw Error('Failed to find "E-Resources" nav button.');
+            if (!document.getElementById('clickable-nav-eresources')) throw Error('Failed to find "E-Resources" nav button.');
             if (!document.getElementById('open-basket-button')) throw Error('Failed to find "Open Basket" button.');
           })
           .then(done)
@@ -73,14 +73,9 @@ module.exports.test = (uiTestCtx) => {
 
       it('should confirm ability to add agreement lines', done => {
         nightmare
-          .click('[class*=paneHeader] [class*=dropdown] button')
-          .wait('#clickable-edit-agreement')
-          .click('#clickable-edit-agreement')
-          .wait('#accordion-toggle-button-agreementFormLines')
-          .click('#accordion-toggle-button-agreementFormLines')
-          .evaluate(() => {
-            if (!document.getElementById('add-agreement-line-button')) throw Error('Failed to find "Add Agreement Line" button');
-          })
+          .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+          .click('#clickable-edit-agreement') // edit button removed, ERM-693
+          .wait('#add-agreement-line-button')
           .then(done)
           .catch(done);
       });
@@ -111,8 +106,7 @@ module.exports.test = (uiTestCtx) => {
 
       it('should not see "Add Agreement Line" button', done => {
         nightmare
-          .wait('#accordion-toggle-button-agreementFormLines')
-          .click('#accordion-toggle-button-agreementFormLines')
+          .wait('#formLines')
           .waitUntilNetworkIdle(1000)
           .evaluate(() => {
             if (document.getElementById('add-agreement-line-button')) throw Error('Found unexpected "Add Agreement Line" button');
@@ -124,10 +118,10 @@ module.exports.test = (uiTestCtx) => {
       it('should close Edit and not find E-Resources page elements', done => {
         nightmare
           .click('#close-agreement-form-button')
-          .wait('#accordion-toggle-button-eresourcesAgreementLines')
-          .click('#accordion-toggle-button-eresourcesAgreementLines')
+          .wait('#accordion-toggle-button-lines')
+          .click('#accordion-toggle-button-lines')
           .evaluate(() => {
-            if (document.getElementById('eresources')) throw Error('Found unexpected "E-Resources" nav button.');
+            if (document.getElementById('clickable-nav-eresources')) throw Error('Found unexpected "E-Resources" nav button.');
             if (document.getElementById('open-basket-button')) throw Error('Found unexpected "Open Basket" button.');
             if (document.getElementById('eresources-covered')) throw Error('Found unexpected "E-Resources Covered" accordion.');
           })

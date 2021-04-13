@@ -1,4 +1,4 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 const AgreementCRUD = require('./agreement-crud');
 
 module.exports.test = (uiTestCtx) => {
@@ -89,7 +89,14 @@ module.exports.test = (uiTestCtx) => {
       it('should have the badge count equal to 1', done => {
         nightmare
           .wait('#clickable-show-tags')
-          .wait(() => parseInt(document.querySelector('#clickable-show-tags').textContent) === 1)
+          .wait(() => parseInt(document.querySelector('#clickable-show-tags').textContent, 10) === 1)
+          .then(done)
+          .catch(done);
+      });
+
+      it('should close tags pane', done => {
+        nightmare
+          .click('#clickable-show-tags')
           .then(done)
           .catch(done);
       });
@@ -103,15 +110,14 @@ module.exports.test = (uiTestCtx) => {
           .wait('#multiselect-option-list-tags-filter > ul > li')
           .click('#multiselect-option-list-tags-filter > ul > li')
           .wait('#list-agreements')
-          .wait(() => document.querySelector('#list-agreements [aria-rowindex="3"]') === null)
-          .wait((agreement) => {
-            const agreementsArray = [...document.querySelectorAll('#list-agreements div[role="row"]')];
-            const index =
-              agreementsArray.findIndex(node => node.querySelector('div:nth-child(1)').textContent === agreement);
-            return index >= 0;
-          }, agreement.name)
+          .wait(() => document.querySelector('#list-agreements [aria-rowindex="2"]') !== null)
+          .wait((_agreement) => (
+            document.querySelector('#list-agreements [aria-rowindex="2"]')
+              .textContent.indexOf(_agreement)
+              >= 0
+          ), agreement.name)
           .then(done)
-          .catch(done)
+          .catch(done);
       });
     });
   });

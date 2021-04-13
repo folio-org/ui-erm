@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="14px" height="14px" viewBox="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.2 (67145) - http://www.bohemiancoding.com/sketch -->
+    <title>App icon / 14px / Light Outline / Platforms</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="14" height="14" rx="3.5"></rect>
+        <linearGradient x1="50%" y1="0.333333333%" x2="50%" y2="101.041667%" id="linearGradient-3">
+            <stop stop-color="#4890E3" offset="0%"></stop>
+            <stop stop-color="#1E3DBD" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="App-icon-/-14px-/-Light-Outline-/-Platforms" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <g id="Mask"></g>
+            <g id="Platforms" mask="url(#mask-2)">
+                <rect id="Rectangle-path" fill="url(#linearGradient-3)" fill-rule="nonzero" x="0" y="0" width="14" height="14"></rect>
+                <ellipse id="Oval" stroke="#FFFFFF" stroke-width="1.5" cx="7.07583333" cy="5.6875" rx="2.84666667" ry="1.56916667"></ellipse>
+                <path d="M4.22916667,5.6875 L4.22916667,8.53416667 C4.96697507,9.3043106 5.98563885,9.74221333 7.05215312,9.74771083 C8.11866739,9.75320833 9.14179139,9.32583027 9.8875,8.56333333 L9.8875,5.64666667" id="Shape" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"></path>
+            </g>
+            <rect id="Outline" stroke-opacity="0.2" stroke="#FFFFFF" mask="url(#mask-2)" x="0.5" y="0.5" width="13" height="13" rx="3.5"></rect>
+        </g>
+    </g>
+</svg>

@@ -1,7 +1,5 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 const AgreementCRUD = require('./agreement-crud');
-
-let NUMBER_OF_TERMS;
 
 module.exports.test = (uiTestCtx) => {
   const number = Math.round(Math.random() * 100000);
@@ -9,7 +7,7 @@ module.exports.test = (uiTestCtx) => {
     name: `Controlling License #${number}`,
     note: `This controlling license was automatically created and linked for run ${number}`,
     status: 'Controlling',
-    startDate: '2018-07-01',
+    startDate: '07/01/2018',
   }];
 
   const term = {
@@ -28,7 +26,7 @@ module.exports.test = (uiTestCtx) => {
 
     this.timeout(Number(config.test_timeout));
 
-    describe('login > create license > edit terms > create agreement > link license > check term > logout', () => {
+    describe('create license > edit terms > create agreement > link license > check term', () => {
       before((done) => {
         helpers.login(nightmare, config, done);
       });
@@ -49,44 +47,19 @@ module.exports.test = (uiTestCtx) => {
 
             .waitUntilNetworkIdle(2000) // Wait for the default values to be fetched and set.
 
+            .wait('#edit-license-name')
             .insert('#edit-license-name', l.name)
             .insert('#edit-license-start-date', l.startDate)
 
-            .click('#accordion-toggle-button-licenseFormTerms')
-
             .then(done)
             .catch(done);
         });
 
-        it('should count the number of terms', done => {
+        it(`should add term ${term.name} w/ value ${term.value}`, done => {
           nightmare
-            .evaluate(() => [...document.querySelectorAll('[data-test-term-name]')].length)
-            .then(count => {
-              NUMBER_OF_TERMS = count;
-            })
-            .then(done)
-            .catch(done);
-        });
-
-        it(`should add term ${term.name}`, done => {
-          nightmare
-            .click('#add-term-btn')
-            .wait(500)
-            .evaluate(() => [...document.querySelectorAll('[data-test-term-name]')].length)
-            .then(count => {
-              if (count !== NUMBER_OF_TERMS + 1) {
-                throw Error(`Expected ${NUMBER_OF_TERMS + 1} terms but found ${count}!`);
-              }
-              NUMBER_OF_TERMS += 1;
-            })
-            .then(done)
-            .catch(done);
-        });
-
-        it(`should set term to: ${term.value}`, done => {
-          nightmare
-            .type(`#edit-term-${NUMBER_OF_TERMS - 1}-name`, term.label)
-            .type(`#edit-term-${NUMBER_OF_TERMS - 1}-value`, term.value)
+            .click('#add-customproperty-btn')
+            .type('[data-test-customproperty=optional] [data-test-customproperty-name]', 'o')
+            .type('[data-test-customproperty=optional] [data-test-customproperty-value]', term.value)
             .then(done)
             .catch(done);
         });
@@ -94,7 +67,7 @@ module.exports.test = (uiTestCtx) => {
         it('should create license', done => {
           nightmare
             .click('#clickable-create-license')
-            .wait('#licenseInfo')
+            .wait('#list-licenses')
             .waitUntilNetworkIdle(1000)
             .then(done)
             .catch(done);
@@ -103,8 +76,8 @@ module.exports.test = (uiTestCtx) => {
         it('should find new term in terms list', done => {
           nightmare
             .evaluate((expectedTerm) => {
-              const nameElement = document.querySelector(`[data-test-term-label=${expectedTerm.name}]`);
-              const valueElement = document.querySelector(`[data-test-term-value=${expectedTerm.name}]`);
+              const nameElement = document.querySelector(`[data-test-customproperty-label=${expectedTerm.name}]`);
+              const valueElement = document.querySelector(`[data-test-customproperty-value=${expectedTerm.name}]`);
 
               if (!nameElement) {
                 throw Error(`Expected to find ${expectedTerm.name} label`);
@@ -135,14 +108,12 @@ module.exports.test = (uiTestCtx) => {
         AgreementCRUD.createAgreement(nightmare, done, agreement);
       });
 
-      it('should open edit agreement page and open licenses accordion', done => {
+      it('should open edit agreement page', done => {
         nightmare
-          .click('[class*=paneHeader] [class*=dropdown] button')
-          .wait('#clickable-edit-agreement')
-          .click('#clickable-edit-agreement')
-          .wait('#agreementFormInfo')
+          .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+          .click('#clickable-edit-agreement') // edit button removed, ERM-693
+          .wait('#formLicenses')
           .waitUntilNetworkIdle(1000)
-          .click('#accordion-toggle-button-agreementFormLicense')
           .then(done)
           .catch(done);
       });
@@ -163,6 +134,7 @@ module.exports.test = (uiTestCtx) => {
             .wait(`#plugin-find-license-modal [role="row"][data-label*="${l.name}"]`)
             .click(`#plugin-find-license-modal [role="row"][data-label*="${l.name}"]`)
             .wait(`#linkedLicenses-remoteId-${i}-license-card`)
+            .waitUntilNetworkIdle(2000)
             .insert(`#linkedLicenses-note-${i}`, l.note)
             .then(done)
             .catch(done);
@@ -171,7 +143,7 @@ module.exports.test = (uiTestCtx) => {
 
       it('should fail to save due to license link status being unselected', done => {
         nightmare
-          .click('#clickable-updateagreement')
+          .click('#clickable-update-agreement')
           .evaluate(() => {
             if (!document.querySelector('label[for*="linkedLicenses-status-"] ~ div[role="alert"] [class*="feedbackError"]')) {
               throw Error('Expected to find a license link status error messages because it is undefined and did not');
@@ -197,11 +169,11 @@ module.exports.test = (uiTestCtx) => {
 
       it('should save updated agreement', done => {
         nightmare
-          .click('#clickable-updateagreement')
+          .click('#clickable-update-agreement')
           .wait('[data-test-agreement-info]')
           .waitUntilNetworkIdle(2000)
-          .wait('#accordion-toggle-button-licenseInfo')
-          .click('#accordion-toggle-button-licenseInfo')
+          .wait('#clickable-expand-all')
+          .click('#clickable-expand-all')
           .then(done)
           .catch(done);
       });
@@ -215,7 +187,7 @@ module.exports.test = (uiTestCtx) => {
               const controllingLicenseElement = document.querySelector('#agreement-controlling-license');
               if (!controllingLicenseElement) throw Error('Failed to find controlling license element');
 
-              const name = controllingLicenseElement.querySelector('[data-test-license-card-name]').innerText;
+              const name = controllingLicenseElement.querySelector('[data-test-license-name]').innerText;
               if (name !== expected.name) throw Error(`Expected controlling license name "${expected.name}" and found "${name}".`);
             }, controllingLicense)
             .then(done)
@@ -223,31 +195,11 @@ module.exports.test = (uiTestCtx) => {
         });
       }
 
-      it('should open license and business terms accordion', done => {
-        nightmare
-          .wait('#accordion-toggle-button-licenseBusinessTerms')
-          .click('#accordion-toggle-button-licenseBusinessTerms')
-          .then(done)
-          .catch(done);
-      });
-
-      it('should count the number of terms', done => {
-        nightmare
-          .evaluate(() => [...document.querySelectorAll('[data-test-term-label]')].length)
-          .then(count => {
-            if (count !== NUMBER_OF_TERMS) {
-              throw Error(`Expected ${NUMBER_OF_TERMS} terms but found ${count}!`);
-            }
-          })
-          .then(done)
-          .catch(done);
-      });
-
       it(`should find term ${term.name} in terms list`, done => {
         nightmare
           .evaluate((expectedTerm) => {
-            const nameElement = document.querySelector(`[data-test-term-label=${expectedTerm.name}]`);
-            const valueElement = document.querySelector(`[data-test-term-value=${expectedTerm.name}]`);
+            const nameElement = document.querySelector(`[data-test-customproperty-label=${expectedTerm.name}]`);
+            const valueElement = document.querySelector(`[data-test-customproperty-value=${expectedTerm.name}]`);
 
             if (!nameElement) {
               throw Error(`Expected to find ${expectedTerm.name} label`);

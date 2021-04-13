@@ -1,4 +1,4 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 
 const AgreementCRUD = require('./agreement-crud');
 
@@ -14,19 +14,20 @@ const BASKET = [];
 const shouldAddTitleToBasket = (nightmare, index, basket = BASKET) => {
   it(`should add title ${index} to basket`, done => {
     nightmare
-      .wait(`#list-agreements [aria-rowindex="${index + 1}"] a`)
-      .click(`#list-agreements [aria-rowindex="${index + 1}"] a`)
+      .wait(`#list-eresources [aria-rowindex="${index + 1}"]`)
+      .click(`#list-eresources [aria-rowindex="${index + 1}"]`)
       .waitUntilNetworkIdle(2000)
       .wait('[data-test-basket-add-button][data-test-add-title-to-basket]')
       .click('[data-test-basket-add-button][data-test-add-title-to-basket]')
       .evaluate((resourceIndex, CONSTANTS) => {
-        const selectedResourceNode = document.querySelector(`#list-agreements [aria-rowindex="${resourceIndex + 1}"] a`);
+        const selectedResourceNode = document.querySelector(`#list-eresources [aria-rowindex="${resourceIndex + 1}"]`);
         const name = selectedResourceNode.children[CONSTANTS.ERESOURCES_NAME_COLUMN].innerText;
         const type = selectedResourceNode.children[CONSTANTS.ERESOURCES_TYPE_COLUMN].innerText;
 
         const removeButton = document.querySelector('[data-test-basket-remove-button]');
         const addedItem = {
           id: removeButton.getAttribute('data-test-entitlement-option-id'),
+          coverage: [JSON.parse(removeButton.getAttribute('data-test-coverage-details'))],
           name,
           type,
         };
@@ -46,9 +47,9 @@ module.exports.shouldAddTitleToBasket = shouldAddTitleToBasket;
 const shouldHaveCorrectAgreementLines = (nightmare, basketIndices = [], basket = BASKET) => {
   it(`should see ${basketIndices.length} lines with correct resources`, done => {
     nightmare
-      .wait('section#eresourcesAgreementLines')
+      .wait('#accordion-toggle-button-lines')
       .evaluate(() => {
-        const header = document.querySelector('section#eresourcesAgreementLines [class*=header] button');
+        const header = document.querySelector('#accordion-toggle-button-lines');
         if (!header) throw Error('Could not find Eresources accordion header');
 
         return header.getAttribute('aria-expanded');
@@ -57,17 +58,16 @@ const shouldHaveCorrectAgreementLines = (nightmare, basketIndices = [], basket =
         let chain = nightmare;
         if (accordionExpanded === 'false') {
           chain = chain
-            .click('section#eresourcesAgreementLines [class*=header] button')
+            .click('#accordion-toggle-button-lines')
             .wait('#agreement-lines [class*=mclScrollable] [aria-rowindex]');
         }
 
         return chain.evaluate((CONSTANTS, indices) => {
           const lines = [...document.querySelectorAll('#agreement-lines [class*=mclScrollable] [aria-rowindex]')];
-
           if (lines.length !== indices.length) throw Error(`Expected to find ${indices.length} agreement line and found ${lines.length}`);
 
           return lines.map(node => ({
-            id: node.children[CONSTANTS.LINES_NAME_COLUMN].children[0].getAttribute('data-test-resource-id'),
+            id: node.querySelector('[data-test-resource-id]').getAttribute('data-test-resource-id'),
             name: node.children[CONSTANTS.LINES_NAME_COLUMN].textContent,
             type: node.children[CONSTANTS.LINES_TYPE_COLUMN].textContent,
           }));
@@ -99,9 +99,9 @@ module.exports.test = (uiTestCtx) => {
     const values = {
       search: 's',
       agreementName: `Basketforged Agreement #${number}`,
-      agreementStartDate: '2019-01-31',
-      agreementRenewalPriority: 'Definitely Renew',
-      agreementStatus: 'In Negotiation',
+      agreementStartDate: '01/31/2019',
+      agreementRenewalPriority: 'Definitely renew',
+      agreementStatus: 'In negotiation',
     };
 
     this.timeout(Number(config.test_timeout));
@@ -121,18 +121,50 @@ module.exports.test = (uiTestCtx) => {
 
       it('should open eresources', done => {
         nightmare
-          .click('nav #eresources')
-          .wait('#input-eresource-search')
+          .waitUntilNetworkIdle(1000)
+          .click('#clickable-nav-eresources')
+          .waitUntilNetworkIdle(1000)
           .then(done)
+          .catch(done);
+      });
+
+      it('should search for eresource by identifier', done => {
+        nightmare
+          .wait('#list-eresources')
+          .evaluate(() => {
+            // Search the ISBN, ISSNO and ISSNP columns for a record that has an identifier.
+            const getIdentifierFromRow = item => item.children[2].innerText || item.children[3].innerText || item.children[4].innerText;
+            const rowWithIdentifier = [...document.querySelectorAll('#list-eresources [class*=mclScrollable] [aria-rowindex]')]
+              .find(getIdentifierFromRow);
+            return getIdentifierFromRow(rowWithIdentifier);
+          })
+          .then((ISBN) => {
+            nightmare
+              .insert('#input-eresource-search', ISBN)
+              .click('#clickable-search-eresources')
+              .waitUntilNetworkIdle(2000)
+              .wait('#list-eresources')
+              .evaluate((ISBNNumber) => {
+                const resultCount = [...document.querySelectorAll('#list-eresources [class*=mclScrollable] [aria-rowindex]')].length;
+                if (resultCount !== 1) throw Error(`Expected to find an eresource with ISBN ${ISBNNumber}`);
+              }, ISBN)
+              .then(done)
+              .catch(done);
+          })
           .catch(done);
       });
 
       it(`should search for "${values.search}"`, done => {
         nightmare
+          .click('#clickable-reset-all')
           .wait('#input-eresource-search')
+          .wait(() => {
+            const resultCount = [...document.querySelectorAll('#list-eresources [class*=mclScrollable] [aria-rowindex]')].length;
+            return resultCount > 1;
+          })
           .insert('#input-eresource-search', values.search)
-          .click('[data-test-search-and-sort-submit]')
-          .wait(1000)
+          .click('#clickable-search-eresources')
+          .waitUntilNetworkIdle(2000)
           .then(done)
           .catch(done);
       });
@@ -174,17 +206,17 @@ module.exports.test = (uiTestCtx) => {
           nightmare
             .click('#basket-contents [class*=mclScrollable] [aria-rowindex="3"] input[type=checkbox]')
             .click('[data-test-basket-create-agreement]')
-            .wait('#accordion-toggle-button-agreementFormLines')
-            .click('#accordion-toggle-button-agreementFormLines')
 
             // Ensure two agreement lines (0 and 1) has been auto-added for the basket item
             .wait('#agreement-form-lines [data-test-ag-line-number="1"]')
 
             .insert('#edit-agreement-name', values.agreementName)
-            .insert('#edit-agreement-start-date', values.agreementStartDate)
+            .insert('#period-start-date-0', values.agreementStartDate)
             .type('#edit-agreement-status', values.agreementStatus)
-            .click('#clickable-createagreement')
+            .click('#clickable-create-agreement')
             .wait('[data-test-agreement-info]')
+            .waitUntilNetworkIdle(2000)
+            .click('#clickable-expand-all')
             .then(done)
             .catch(done);
         });
@@ -193,7 +225,7 @@ module.exports.test = (uiTestCtx) => {
           nightmare
             .wait('[data-test-agreement-info]')
             .evaluate(expectedValues => {
-              const foundName = document.querySelector('[data-test-agreement-name]').innerText;
+              const foundName = document.querySelector('[data-test-agreement-name]').innerText.trim();
               if (foundName !== expectedValues.agreementName) {
                 throw Error(`Name of agreement is incorrect. Expected "${expectedValues.agreementName}" and got "${foundName}" `);
               }
@@ -217,27 +249,62 @@ module.exports.test = (uiTestCtx) => {
           AgreementCRUD.createAgreement(nightmare, done, agreement, BASKET[1].id);
         });
 
+        it('should edit agreement and should reject activeTo <= activeFrom', done => {
+          nightmare
+            .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+            .click('#clickable-edit-agreement') // edit button removed, ERM-693
+            .waitUntilNetworkIdle(2000)
+            .insert('#edit-agreement-name', 'Invalid Date')
+            .click('#datepicker-clear-button-agreement-line-0-active-from')
+            .insert('#agreement-line-0-active-from', '10/31/2019')
+            .click('#datepicker-clear-button-agreement-line-0-active-to')
+            .type('#agreement-line-0-active-to', '10/30/2019')
+            .click('#clickable-update-agreement')
+            .evaluate(() => {
+              if (!document.querySelector('[data-test-error-end-date-too-early]')) {
+                throw Error('Expected to find an error message at [data-test-error-end-date-too-early] for the End Date');
+              }
+            })
+            .then(() => {
+              nightmare
+                .click('#clickable-cancel')
+                .click('#clickable-cancel-editing-confirmation-cancel');
+            })
+            .then(done)
+            .catch(done);
+        });
+
+        it('should edit agreement', done => {
+          nightmare
+            .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+            .click('#clickable-edit-agreement') // edit button removed, ERM-693
+            .then(done)
+            .catch(done);
+        });
+
         it(`should add first and third items to agreement: ${agreement.name}`, done => {
           nightmare
             .click('[data-test-open-basket-button]')
+
+            // Unselect the second item in the basket
+            .wait('#basket-contents [class*=mclScrollable] [aria-rowindex="3"] input[type=checkbox]')
+            .click('#basket-contents [class*=mclScrollable] [aria-rowindex="3"] input[type=checkbox]')
+
             .wait('#select-agreement-for-basket')
-            .wait(5000) // Wait for _all_ the agreements to come back
+            .waitUntilNetworkIdle(2000) // Wait for _all_ the agreements to come back
             .click('#select-agreement-for-basket')
             .insert('#sl-container-select-agreement-for-basket input', agreement.name)
-            .wait(250)
+            .waitUntilNetworkIdle(2000)
             .click('#sl-container-select-agreement-for-basket li')
             .wait(250)
             .click('[data-test-basket-add-to-agreement]')
 
             .wait('#form-agreement')
-            .wait('#accordion-toggle-button-agreementFormLines')
-            .click('#accordion-toggle-button-agreementFormLines')
-
             .wait(() => {
               const resources = document.querySelectorAll('#agreement-form-lines [data-test-ag-line-number]');
               return resources.length === 3;
             })
-            .click('#clickable-updateagreement')
+            .click('#clickable-update-agreement')
             .wait('[data-test-agreement-info]')
             .waitUntilNetworkIdle(2000) // Wait for the update list of agreement lines to fetch/render
             .then(done)

@@ -1,4 +1,4 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 
 const AgreementCRUD = require('./agreement-crud');
 const Basket = require('./basket');
@@ -6,9 +6,13 @@ const Utils = require('./utils');
 
 const checkTableForCustomCoverageIcon = (nightmare, done, tableId) => {
   nightmare
-    .evaluate((id) => {
-      if (!document.querySelector(`#${id} [data-test-custom-coverage`)) {
-        throw Error(`Failed to find custom coverage icon in "${id}" table.`);
+    .evaluate(_tableId => {
+      if (!document.querySelector(`#${_tableId}`)) {
+        throw Error(`Failed to find "${_tableId}" table.`);
+      }
+
+      if (!document.querySelector(`#${_tableId} [data-test-custom-coverage]`)) {
+        throw Error(`Failed to find custom coverage icon in "${_tableId}" table.`);
       }
     }, tableId)
     .then(done)
@@ -18,31 +22,33 @@ const checkTableForCustomCoverageIcon = (nightmare, done, tableId) => {
 const checkTableForCustomCoverageData = (nightmare, done, tableId, values) => {
   nightmare
     .evaluate((expectedValues, id) => {
-      const startDates = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-start] [data-test-date]`)];
-      const startVolumes = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-start] [data-test-volume]`)];
-      const startIssues = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-start] [data-test-issue]`)];
-      const endDates = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-end] [data-test-date]`)];
-      const endVolumes = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-end] [data-test-volume]`)];
-      const endIssues = [...document.querySelectorAll(`#${id} [data-test-coverage-statements] [data-test-end] [data-test-issue]`)];
+      const startDates = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-start] [data-test-date]`)];
+      const startVolumes = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-start] [data-test-volume]`)];
+      const startIssues = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-start] [data-test-issue]`)];
+      const endDates = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-end] [data-test-date]`)];
+      const endVolumes = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-end] [data-test-volume]`)];
+      const endIssues = [...document.querySelectorAll(`#${id} [data-test-serial-coverage] [data-test-end] [data-test-issue]`)];
 
       expectedValues.coverage.forEach(ec => {
-        if (!startDates.find(e => e.textContent === ec.startDateFormatted)) {
+        if (!ec.startDate) return;
+
+        if (ec.startDate && !startDates.find(e => e.textContent === ec.startDateFormatted)) {
           throw Error(`Expected to find start date of ${ec.startDateFormatted} in #${id}`);
         }
-        if (!startVolumes.find(e => e.textContent.indexOf(ec.startVolumeFormatted) !== -1)) {
+        if (ec.startVolume && !startVolumes.find(e => e.textContent.indexOf(ec.startVolumeFormatted) !== -1)) {
           throw Error(`Expected to find start volume of ${ec.startVolumeFormatted} in #${id}`);
         }
-        if (!startIssues.find(e => e.textContent.indexOf(ec.startIssueFormatted) !== -1)) {
+        if (ec.startIssue && !startIssues.find(e => e.textContent.indexOf(ec.startIssueFormatted) !== -1)) {
           throw Error(`Expected to find start issue of ${ec.startIssueFormatted} in #${id}`);
         }
 
-        if (!endDates.find(e => e.textContent === ec.endDateFormatted)) {
+        if (ec.endDate && !endDates.find(e => e.textContent === ec.endDateFormatted)) {
           throw Error(`Expected to find end date of ${ec.endDateFormatted} in #${id}`);
         }
-        if (!endVolumes.find(e => e.textContent.indexOf(ec.endVolumeFormatted) !== -1)) {
+        if (ec.endVolume && !endVolumes.find(e => e.textContent.indexOf(ec.endVolumeFormatted) !== -1)) {
           throw Error(`Expected to find end volume of ${ec.endVolumeFormatted} in #${id}`);
         }
-        if (!endIssues.find(e => e.textContent.indexOf(ec.endIssueFormatted) !== -1)) {
+        if (ec.endIssue && !endIssues.find(e => e.textContent.indexOf(ec.endIssueFormatted) !== -1)) {
           throw Error(`Expected to find end issue of ${ec.endIssueFormatted} in #${id}`);
         }
       });
@@ -59,18 +65,18 @@ module.exports.test = (uiTestCtx) => {
       name: `Custom Coverage Agreement #${Math.round(Math.random() * 100000)}`,
       coverage: [
         {
-          startDate: '2001-01-01',
+          startDate: '01/01/2001',
           startVolume: '1',
           startIssue: '11',
-          endDate: '2010-12-31',
+          endDate: '12/31/2010',
           endVolume: '10',
           endIssue: '12',
         },
         {
-          startDate: '2021-01-01',
+          startDate: '01/01/2021',
           startVolume: 'A',
           startIssue: 'AA',
-          endDate: '2030-12-31',
+          endDate: '12/31/2030',
           endVolume: 'B',
           endIssue: 'Z',
         }
@@ -90,7 +96,7 @@ module.exports.test = (uiTestCtx) => {
 
     this.timeout(Number(config.test_timeout));
 
-    describe('login > fill basket > create agreement > set custom coverage > logout', () => {
+    describe('fill basket > create agreement > set custom coverage', () => {
       before((done) => {
         helpers.login(nightmare, config, done);
       });
@@ -105,8 +111,9 @@ module.exports.test = (uiTestCtx) => {
 
       it('should open eresources', done => {
         nightmare
-          .click('nav #eresources')
-          .wait('#input-eresource-search')
+          .waitUntilNetworkIdle(1000)
+          .click('#clickable-nav-eresources')
+          .waitUntilNetworkIdle(1000)
           .then(done)
           .catch(done);
       });
@@ -136,16 +143,31 @@ module.exports.test = (uiTestCtx) => {
           .catch(done);
       });
 
-      it('should edit agreement and add custom coverage', done => {
-        let chain = nightmare
-          .click('[class*=paneHeader] [class*=dropdown] button')
-          .wait('#clickable-edit-agreement')
-          .click('#clickable-edit-agreement')
-          .wait('#agreementFormInfo')
+      it('should edit agreement', done => {
+        basket[0].coverage.forEach(c => {
+          c.startDateFormatted = Utils.formattedDate(c.startDate);
+          c.endDateFormatted = Utils.formattedDate(c.endDate);
+          c.startVolumeFormatted = `Vol:${c.startVolume}`;
+          c.endVolumeFormatted = `Vol:${c.endVolume}`;
+          c.startIssueFormatted = `Iss:${c.startIssue}`;
+          c.endIssueFormatted = `Iss:${c.endIssue}`;
+        });
+
+        nightmare
+          .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+          .click('#clickable-edit-agreement') // edit button removed, ERM-693
+          .wait('[data-test-edit-agreement-info]')
           .waitUntilNetworkIdle(2000)
+          .then(done)
+          .catch(done);
+      });
 
-          .click('#accordion-toggle-button-agreementFormLines');
+      it('should check if default coverage is present', done => {
+        checkTableForCustomCoverageData(nightmare, done, 'agreement-form-lines', basket[0]);
+      });
 
+      it('should add custom coverage', done => {
+        let chain = nightmare;
         values.coverage.forEach((coverage, i) => {
           chain = chain
             .click('#agreement-form-lines [data-test-ag-line-number="0"] #add-agreement-custom-coverage-button')
@@ -158,9 +180,17 @@ module.exports.test = (uiTestCtx) => {
         });
 
         chain
-          .click('#clickable-updateagreement')
+          .click('#clickable-update-agreement')
           .wait('[data-test-agreement-info]')
           .waitUntilNetworkIdle(2000)
+          .wait('#accordion-toggle-button-lines')
+          .evaluate(() => {
+            const header = document.querySelector('#accordion-toggle-button-lines');
+            if (!header) throw Error('Could not find Agreement Lines accordion header');
+
+            return header.getAttribute('aria-expanded');
+          })
+          .then(expanded => (expanded === 'true' ? nightmare : nightmare.click('#accordion-toggle-button-lines')))
           .then(done)
           .catch(done);
       });
@@ -181,16 +211,22 @@ module.exports.test = (uiTestCtx) => {
         checkTableForCustomCoverageData(nightmare, done, 'eresources-covered', values);
       });
 
-      it('should edit agreement and see previously-set custom coverages', done => {
+      it('should edit agreement', done => {
         nightmare
-          .click('[class*=paneHeader] [class*=dropdown] button')
-          .wait('#clickable-edit-agreement')
-          .click('#clickable-edit-agreement')
-          .wait('#agreementFormInfo')
+          .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+          .click('#clickable-edit-agreement') // edit button removed, ERM-693
+          .wait('[data-test-ag-line-number]')
           .waitUntilNetworkIdle(2000)
+          .then(done)
+          .catch(done);
+      });
 
-          .click('#accordion-toggle-button-agreementFormLines')
+      it('should verify default coverage is same as previous', done => {
+        checkTableForCustomCoverageData(nightmare, done, 'agreement-form-lines', basket[0]);
+      });
 
+      it('should see previously-set custom coverages', done => {
+        nightmare
           .evaluate((expectedValues) => {
             const checkInput = (id, value) => {
               const loadedValue = document.getElementById(id).value;
@@ -219,7 +255,7 @@ module.exports.test = (uiTestCtx) => {
       it('should follow agreement line\'s link to eresource', done => {
         nightmare
           .click('#agreement-form-lines [data-test-ag-line-name] a')
-          .wait('#eresource-agreements-list')
+          .wait('#pci-agreements [data-row-index]')
           .then(done)
           .catch(done);
       });
@@ -227,7 +263,7 @@ module.exports.test = (uiTestCtx) => {
       it('should find custom coverage info in "agreements for this eresource" list', done => {
         nightmare
           .evaluate((expectedValues) => {
-            const rows = [...document.querySelectorAll('#eresource-agreements-list [role="row"]')];
+            const rows = [...document.querySelectorAll('#pci-agreements [data-row-index]')];
             const row = rows.find(r => r.textContent.indexOf(expectedValues.name) > -1);
             if (!row) throw Error(`Failed to find agreement ${expectedValues.name} in list`);
 

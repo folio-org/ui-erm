@@ -21,7 +21,7 @@ export default class OrgRoleSettings extends React.Component {
         { labelSingular => (
           <this.connectedControlledVocab
             {...this.props}
-            baseUrl="erm/refdataValues/SubscriptionAgreementOrg/role"
+            baseUrl="erm/refdata/SubscriptionAgreementOrg/role"
             columnMapping={{
               label: <FormattedMessage id="ui-agreements.settings.orgRoles.role" />
             }}

@@ -1,6 +1,6 @@
 {
   "name": "@folio/agreements",
-  "version": "2.5.0",
+  "version": "6.1.0",
   "description": "ERM agreement functionality for Stripes",
   "main": "src/index.js",
   "publishConfig": {
@@ -8,115 +8,270 @@
   },
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=10.0.0"
   },
   "scripts": {
     "start": "stripes serve",
     "build": "stripes build --output ./output",
-    "test": "stripes test nightmare --run nav/agreement-crud/orgs/interfaces/basket/tags-crud/external-licenses/custom-coverage/hide-eresources-func/supplement/notes-crud",
-    "test-int": "stripes test nightmare --run nav/agreement-crud/orgs/interfaces/basket/tags-crud/external-licenses/custom-coverage/hide-eresources-func/supplement/notes-crud/linked-licenses/license-terms",
+    "test": "yarn run test:jest && yarn run test:bigtest",
+    "test:jest": "jest --ci --coverage",
+    "test:bigtest": "stripes test karma --bundle --karma.singleRun --karma.browsers ChromeDocker --karma.reporters mocha junit --coverage",
+    "test-all": "yarn run test-bigtest-once; yarn run test-int",
+    "test-int": "stripes test nightmare --run nav/agreement-crud/contacts/orgs/interfaces/basket/tags-crud/external-licenses/custom-coverage/hide-eresources-func/supplement/agreement-notes/package-notes/title-notes/related-agreements/pick-lists/supplementary-property-config",
+    "test-bigtest-once": "stripes test karma --karma.singleRun",
+    "test-erm": "yarn run test-int; yarn run test-licenses-int",
     "test-licenses-int": "stripes test nightmare --run linked-licenses/license-terms",
+    "test-folio-int": "stripes test nightmare --run ekb-int/po-lines/eusage",
     "test-nav": "stripes test nightmare --run nav",
     "test-agreement-crud": "stripes test nightmare --run agreement-crud",
+    "test-contacts": "stripes test nightmare --run contacts",
     "test-orgs": "stripes test nightmare --run orgs",
     "test-interfaces": "stripes test nightmare --run interfaces",
-    "test-tags-crud": "stripes test nightmare --run tags-crud",
-    "test-notes-crud": "stripes test nightmare --run notes-crud",
     "test-basket": "stripes test nightmare --run basket",
+    "test-tags-crud": "stripes test nightmare --run tags-crud",
     "test-external-licenses": "stripes test nightmare --run external-licenses",
     "test-custom-coverage": "stripes test nightmare --run custom-coverage",
     "test-hide-eresources-func": "stripes test nightmare --run hide-eresources-func",
     "test-supplement": "stripes test nightmare --run supplement",
+    "test-agreement-notes": "stripes test nightmare --run agreement-notes",
+    "test-package-notes": "stripes test nightmare --run package-notes",
+    "test-title-notes": "stripes test nightmare --run title-notes",
+    "test-related-agreements": "stripes test nightmare --run related-agreements",
     "test-linked-licenses": "stripes test nightmare --run linked-licenses",
+    "test-linked-license-warnings": "stripes test nightmare --run linked-license-warnings",
     "test-license-terms": "stripes test nightmare --run license-terms",
     "test-ekb-int": "stripes test nightmare --run ekb-int",
-    "lint": "eslint src",
+    "test-pick-lists": "stripes test nightmare --run pick-lists",
+    "test-po-lines": "stripes test nightmare --run po-lines",
+    "test-supplementary-property-config": "stripes test nightmare --run supplementary-property-config",
+    "test-eusage": "stripes test nightmare --run eusage",
+    "lint": "eslint src test",
     "setPublishRegistry": "node useAlternateRepo"
   },
   "devDependencies": {
-    "@folio/eslint-config-stripes": "^5.3.1",
-    "@folio/stripes-cli": "^2.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-proposal-decorators": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/preset-react": "^7.12.5",
+    "@bigtest/interactor": "^0.9.3",
+    "@bigtest/mocha": "^0.5.2",
+    "@bigtest/react": "^0.1.2",
+    "@folio/eslint-config-stripes": "^5.2.0",
     "@folio/stripes": "^6.0.0",
-    "babel-eslint": "^9.0.0",
-    "eslint": "^5.5.0",
-    "react": "~16.6.3",
-    "react-dom": "~16.6.3",
-    "react-redux": "~5.1.1",
-    "redux": "~3.7.2"
+    "@folio/stripes-testing": "^3.0.0",
+    "@folio/stripes-cli": "^2.0.0",
+    "@testing-library/dom": "^7.26.6",
+    "@testing-library/jest-dom": "^5.11.5",
+    "@testing-library/react": "^11.1.2",
+    "@testing-library/user-event": "^12.2.2",
+    "babel-eslint": "^10.0.0",
+    "babel-jest": "^26.6.3",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "chai": "^4.2.0",
+    "chai-spies": "^1.0.0",
+    "core-js": "^3.6.1",
+    "eslint": "^6.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.3",
+    "eslint-plugin-jest-dom": "^3.2.4",
+    "eslint-plugin-testing-library": "^3.10.0",
+    "faker": "^4.1.0",
+    "identity-obj-proxy": "^3.0.0",
+    "inflected": "^2.0.4",
+    "jest": "^26.6.3",
+    "jest-css-modules": "^2.1.0",
+    "jest-junit": "^12.0.0",
+    "miragejs": "^0.1.40",
+    "mocha": "^6.2.2",
+    "moment": "^2.22.2",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-intl": "^5.8.1",
+    "react-router-dom": "^5.2.0",
+    "regenerator-runtime": "^0.13.3",
+    "sinon": "^7.5.0"
   },
   "dependencies": {
-    "@folio/stripes-erm-components": "^1.3.4",
+    "@folio/react-intl-safe-html": "^2.0.0",
+    "@folio/stripes-erm-components": "^5.0.0",
+    "@rehooks/local-storage": "^2.3.0",
+    "compose-function": "^3.0.3",
+    "final-form": "^4.18.4",
+    "final-form-arrays": "^3.0.1",
+    "final-form-set-field-data": "^1.0.2",
     "lodash": "^4.17.11",
     "prop-types": "^15.6.0",
-    "react-intl": "^2.4.0",
-    "react-router-dom": "^4.1.1",
-    "react-router-prop-types": "^1.0.4",
-    "redux-form": "^7.0.3"
+    "query-string": "^6.6.0",
+    "react-final-form": "^6.3.0",
+    "react-final-form-arrays": "^3.1.0",
+    "react-router-prop-types": "^1.0.4"
   },
   "peerDependencies": {
-    "@folio/stripes": "^2.0.0",
+    "@folio/stripes": "^6.0.0",
+    "moment": "^2.22.2",
     "react": "*",
     "react-dom": "*",
-    "react-redux": "*",
-    "redux": "*"
+    "react-intl": "^5.8.1",
+    "react-router-dom": "^5.2.0"
+  },
+  "resolutions": {
+    "moment": "~2.24.0",
+    "@babel/parser": "7.7.5"
   },
   "stripes": {
-    "type": "app",
+    "actsAs": [
+      "app",
+      "settings"
+    ],
     "displayName": "ui-agreements.meta.title",
     "route": "/erm",
-    "home": "/erm/agreements?sort=Name&filters=agreementStatus.Requested,agreementStatus.In Negotiation,agreementStatus.Draft,agreementStatus.Active",
-    "hasSettings": true,
+    "home": "/erm/agreements",
     "queryResource": "query",
     "okapiInterfaces": {
-      "configuration": "2.0",
-      "erm": "1.0",
-      "licenses": "1.0"
+      "configuration": "2.0 3.0 4.0 5.0",
+      "erm": "2.0 3.0 4.0",
+      "licenses": "1.0 2.0 3.0"
     },
+    "optionalOkapiInterfaces": {
+      "order-lines": "1.0 2.0",
+      "organizations-storage.interfaces": "2.0",
+      "users": "13.0 14.0 15.0"
+    },
+    "stripesDeps": [
+      "@folio/stripes-erm-components"
+    ],
     "permissionSets": [
       {
         "permissionName": "module.agreements.enabled",
         "displayName": "UI: ui-agreements module is enabled",
-        "visible": true,
         "subPermissions": [
           "configuration.entries.collection.get",
-          "tags.collection.get"
+          "tags.collection.get",
+          "erm.refdata.view",
+          "note.types.collection.get"
         ]
       },
       {
-        "permissionName": "ui-agreements.agreements.view",
-        "displayName": "Agreements: Can view agreements",
+        "permissionName": "ui-agreements.resources.view",
+        "displayName": "Agreements: Search & view e-resources",
+        "description": "Grants all permissions included in 'Agreements: Search & view agreements' plus the ability to search and view e-resources (packages and titles in those packages) in the internal KB.",
         "visible": true,
         "subPermissions": [
           "module.agreements.enabled",
-          "ui-organizations.view",
-          "organizations-storage.interfaces.all",
-          "tags.item.post"
-        ]
-      },
-      {
-        "permissionName": "ui-agreements.agreements.edit",
-        "displayName": "Agreements: Can edit agreements",
-        "visible": true,
-        "subPermissions": [
+          "erm.packages.view",
+          "erm.titles.view",
+          "erm.resources.view",
+          "erm.pci.view",
           "ui-agreements.agreements.view"
         ]
       },
       {
-        "permissionName": "ui-agreements.agreements.create",
-        "displayName": "Agreements: Can create and edit agreements",
+        "permissionName": "ui-agreements.platforms.view",
+        "displayName": "Agreements: Search & view platforms",
+        "description": "Grants all permissions included in 'Agreements: Search & view e-resources' plus the ability to search and view platforms in the internal KB",
         "visible": true,
         "subPermissions": [
-          "ui-agreements.agreements.edit"
+          "module.agreements.enabled",
+          "erm.platforms.view",
+          "ui-agreements.resources.view"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.platforms.edit",
+        "displayName": "Agreements: Edit platforms",
+        "description": "Grants all permissions included in 'Platforms: Search & view platforms' plus the ability to edit platform properties",
+        "visible": true,
+        "subPermissions": [
+          "erm.platforms.edit",
+          "ui-agreements.platforms.view"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.resources.edit",
+        "displayName": "Agreements: Edit e-resources",
+        "description": "Grants all permissions included in 'Agreements: Search & view e-resources' plus the ability to edit the e-resources",
+        "visible": true,
+        "subPermissions": [
+          "erm.pci.edit",
+          "erm.pti.edit",
+          "erm.titles.edit",
+          "ui-agreements.resources.view"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.agreements.view",
+        "displayName": "Agreements: Search & view agreements",
+        "description": "A user with this permission can search and view existing agreements. This includes the permission to see and access the Agreement app in the Folio interface",
+        "visible": true,
+        "subPermissions": [
+          "module.agreements.enabled",
+          "erm.agreements.view",
+          "erm.contacts.view",
+          "erm.custprops.view",
+          "erm.files.view",
+          "erm.orgs.view",
+          "licenses.custprops.view"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.agreements.edit",
+        "displayName": "Agreements: Edit agreements",
+        "description": "Grants all permissions included in 'Agreements: Search & view agreements' plus the ability to edit agreements, including the ability to add and edit agreement lines, documents and view, add and edit tags on an agreement",
+        "visible": true,
+        "subPermissions": [
+          "ui-agreements.agreements.view",
+          "erm.agreements.edit",
+          "erm.entitlements.edit",
+          "erm.files.edit",
+          "tags.item.post"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.agreements.delete",
+        "displayName": "Agreements: Delete agreements",
+        "description": "Grants all permissions included in 'Agreements: Search & view agreements' plus the ability to delete agreements. This does not include the ability to edit agreements, only to delete them",
+        "visible": true,
+        "subPermissions": [
+          "ui-agreements.agreements.view",
+          "erm.agreements.item.delete"
         ]
       },
       {
         "permissionName": "settings.agreements.enabled",
         "displayName": "Settings (Agreements): Can view and edit settings",
-        "visible": true,
         "subPermissions": [
           "module.agreements.enabled",
           "settings.enabled",
           "configuration.all"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.generalSettings.manage",
+        "displayName": "Settings (Agreements): Can view and edit general settings",
+        "description": "Grants permission to view and edit the general Agreements settings",
+        "visible": true,
+        "subPermissions": [
+          "settings.agreements.enabled"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.picklists.manage",
+        "displayName": "Settings (Agreements): Manage pick lists and values",
+        "description": "Grants all permissions included in 'Settings (Agreements): Can view and edit general settings' plus the ability to manage pick lists and pick list values",
+        "visible": true,
+        "subPermissions": [
+          "settings.agreements.enabled",
+          "erm.refdata.manage"
+        ]
+      },
+      {
+        "permissionName": "ui-agreements.supplementaryProperties.manage",
+        "displayName": "Settings (Agreements): Manage agreement supplementary properties",
+        "description": "Grants all permissions included in 'Settings (Agreements): Can view and edit general settings' plus the ability to manage the available supplementary properties",
+        "visible": true,
+        "subPermissions": [
+          "settings.agreements.enabled",
+          "erm.custprops.manage"
         ]
       }
     ],
@@ -125,6 +280,21 @@
         "name": "app",
         "alt": "ERM agreement functionality for Stripes",
         "title": "Agreements"
+      },
+      {
+        "name": "closedAgreement",
+        "alt": " ",
+        "title": "Closed agreement"
+      },
+      {
+        "name": "eresource",
+        "alt": " ",
+        "title": "eresource"
+      },
+      {
+        "name": "platform",
+        "alt": " ",
+        "title": "platform"
       }
     ]
   }

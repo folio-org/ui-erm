@@ -1,0 +1,10 @@
+@import "@folio/stripes-components/lib/variables.css";
+
+.error {
+  color: var(--error);
+}
+
+.separator {
+  border-bottom: 1px solid var(--color-border-p2);
+  margin-bottom: var(--gutter);
+}

@@ -1,4 +1,4 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 const AgreementCRUD = require('./agreement-crud');
 
 module.exports.test = (uiTestCtx) => {
@@ -7,17 +7,17 @@ module.exports.test = (uiTestCtx) => {
     name: `Controlling License #${number}`,
     note: `This controlling license was automatically created and linked for run ${number}`,
     status: 'Controlling',
-    startDate: '2018-07-01',
+    startDate: '07/01/2018',
   }, {
     name: `Future License #${number}`,
     note: `This future license was automatically created and linked for run ${number}`,
     status: 'Future',
-    startDate: '2028-07-01',
+    startDate: '07/01/2028',
   }, {
     name: `Historical License #${number}`,
     note: `This historical license was automatically created and linked for run ${number}`,
     status: 'Historical',
-    startDate: '2008-07-01',
+    startDate: '07/01/2008',
   }];
 
   const agreement = {
@@ -30,7 +30,7 @@ module.exports.test = (uiTestCtx) => {
 
     this.timeout(Number(config.test_timeout));
 
-    describe('login > create agreement > link licenses > logout', () => {
+    describe('create agreement > link licenses', () => {
       before((done) => {
         helpers.login(nightmare, config, done);
       });
@@ -51,12 +51,43 @@ module.exports.test = (uiTestCtx) => {
 
             .waitUntilNetworkIdle(2000) // Wait for the default values to be fetched and set.
 
+            .wait('#edit-license-name')
             .insert('#edit-license-name', l.name)
             .insert('#edit-license-start-date', l.startDate)
 
             .click('#clickable-create-license')
-            .wait('#licenseInfo')
-            .waitUntilNetworkIdle(500)
+
+            .waitUntilNetworkIdle(2000)
+            .wait('#clickable-expand-all')
+            .click('#clickable-expand-all')
+            .click('#add-amendment-button')
+            .wait('#edit-amendment-name')
+            .insert('#edit-amendment-name', 'Current Amendment')
+            .click('#clickable-create-amendment')
+            .waitUntilNetworkIdle(2000)
+            .click('#pane-view-amendment [icon="times"]')
+            .wait('#licenseAmendments')
+
+            .wait('#clickable-expand-all')
+            .click('#clickable-expand-all')
+            .click('#add-amendment-button')
+            .wait('#edit-amendment-name')
+            .insert('#edit-amendment-name', 'Future Amendment')
+            .click('#clickable-create-amendment')
+            .waitUntilNetworkIdle(2000)
+            .click('#pane-view-amendment [icon="times"]')
+            .wait('#licenseAmendments')
+
+            .wait('#clickable-expand-all')
+            .click('#clickable-expand-all')
+            .click('#add-amendment-button')
+            .wait('#edit-amendment-name')
+            .insert('#edit-amendment-name', 'Historical Amendment')
+            .click('#clickable-create-amendment')
+            .waitUntilNetworkIdle(2000)
+            .click('#pane-view-amendment [icon="times"]')
+            .wait('#licenseAmendments')
+
             .then(() => nightmare.click('#pane-view-license button[icon=times]'))
             .then(done)
             .catch(done);
@@ -73,11 +104,9 @@ module.exports.test = (uiTestCtx) => {
 
       it('should open edit agreement page and open licenses accordion', done => {
         nightmare
-          .click('[class*=paneHeader] [class*=dropdown] button')
-          .wait('#clickable-edit-agreement')
-          .click('#clickable-edit-agreement')
-          .wait('#agreementFormInfo')
-          .click('#accordion-toggle-button-agreementFormLicense')
+          .wait('#clickable-edit-agreement') // edit button removed, ERM-693
+          .click('#clickable-edit-agreement') // edit button removed, ERM-693
+          .wait('#formLicenses')
           .then(done)
           .catch(done);
       });
@@ -97,7 +126,8 @@ module.exports.test = (uiTestCtx) => {
             .wait('#list-licenses[data-total-count="1"]')
             .wait(`#plugin-find-license-modal [role="row"][data-label*="${l.name}"]`)
             .click(`#plugin-find-license-modal [role="row"][data-label*="${l.name}"]`)
-            .wait(`#linkedLicenses-remoteId-${i}-license-card`)
+            .waitUntilNetworkIdle(2000)
+
             .insert(`#linkedLicenses-note-${i}`, l.note)
             .then(done)
             .catch(done);
@@ -106,7 +136,7 @@ module.exports.test = (uiTestCtx) => {
 
       it('should fail to save due to license link status being unselected', done => {
         nightmare
-          .click('#clickable-updateagreement')
+          .click('#clickable-update-agreement')
           .evaluate(() => {
             if (!document.querySelector('label[for*="linkedLicenses-status-"] ~ div[role="alert"] [class*="feedbackError"]')) {
               throw Error('Expected to find a license link status error messages because it is undefined and did not');
@@ -157,13 +187,36 @@ module.exports.test = (uiTestCtx) => {
           .catch(done);
       });
 
+      it('should fail due to unset amendment statuses', done => {
+        nightmare
+          .click('#clickable-update-agreement')
+          .evaluate(() => {
+            if (!document.querySelector('[data-test-amendment] [class*="feedbackError"]')) {
+              throw Error('Expected to find an amendment status error message because it is undefined and did not');
+            }
+          })
+          .then(done)
+          .catch(done);
+      });
+
+      licenses.forEach((l, i) => {
+        it(`should set amendment statuses for ${l.name}`, done => {
+          nightmare
+            .type(`#linkedLicenses-remoteId-${i}-license-card [data-test-amendment="Current Amendment"] select`, 'Current')
+            .type(`#linkedLicenses-remoteId-${i}-license-card [data-test-amendment="Historical Amendment"] select`, 'Historical')
+            .type(`#linkedLicenses-remoteId-${i}-license-card [data-test-amendment="Future Amendment"] select`, 'Future')
+            .then(done)
+            .catch(done);
+        });
+      });
+
       it('should save updated agreement', done => {
         nightmare
-          .click('#clickable-updateagreement')
+          .click('#clickable-update-agreement')
           .wait('[data-test-agreement-info]')
           .waitUntilNetworkIdle(2000)
-          .wait('#accordion-toggle-button-licenseInfo')
-          .click('#accordion-toggle-button-licenseInfo')
+          .wait('#clickable-expand-all')
+          .click('#clickable-expand-all')
           .then(done)
           .catch(done);
       });
@@ -177,40 +230,104 @@ module.exports.test = (uiTestCtx) => {
               const controllingLicenseElement = document.querySelector('#agreement-controlling-license');
               if (!controllingLicenseElement) throw Error('Failed to find controlling license element');
 
-              const name = controllingLicenseElement.querySelector('[data-test-license-card-name]').innerText;
+              const name = controllingLicenseElement.querySelector('[data-test-license-name]').innerText;
               if (name !== expected.name) throw Error(`Expected controlling license name "${expected.name}" and found "${name}".`);
             }, controllingLicense)
             .then(done)
             .catch(done);
         });
+
+        it('should find controlling license\'s Current Amendment', done => {
+          nightmare
+            .evaluate(() => {
+              const a = document.querySelector('#controlling-license-current-amendments [data-row-index="row-0"] a');
+              if (!a) throw Error('Failed to find link to current amendment');
+              if (a.textContent !== 'Current Amendment') throw Error('Link to current amendment is labelled incorrectly.');
+            })
+            .then(done)
+            .catch(done);
+        });
+
+        it('should find controlling license\'s Future Amendment', done => {
+          nightmare
+            .evaluate(() => {
+              const a = document.querySelector('#controlling-license-future-amendments [data-row-index="row-0"] a');
+              if (!a) throw Error('Failed to find link to future amendment');
+              if (a.textContent !== 'Future Amendment') throw Error('Link to future amendment is labelled incorrectly.');
+            })
+            .then(done)
+            .catch(done);
+        });
+
+        it('should find controlling license\'s Historical Amendment', done => {
+          nightmare
+            .evaluate(() => {
+              const a = document.querySelector('#controlling-license-historical-amendments [data-row-index="row-0"] a');
+              if (!a) throw Error('Failed to find link to historical amendment');
+              if (a.textContent !== 'Historical Amendment') throw Error('Link to current amendment is labelled incorrectly.');
+            })
+            .then(done)
+            .catch(done);
+        });
       }
 
-      const inactiveLicenses = licenses.filter(l => l.status !== 'Controlling');
-      if (inactiveLicenses) {
-        it('should find inactive licenses', done => {
+      const historicalLicenses = licenses.filter(l => l.status === 'Historical');
+      if (historicalLicenses) {
+        it('should find historical licenses', done => {
           nightmare
-            .wait('#agreement-inactive-licenses')
             .evaluate(expected => {
+              const cards = [...document.querySelectorAll('#historicalLicenses [data-test-linked-license-card]')];
+
               expected.forEach(l => {
-                const name = document.evaluate(
-                  `//*[@id="agreement-inactive-licenses"]//div[.="${l.name}"]`,
-                  document,
-                  null,
-                  XPathResult.FIRST_ORDERED_NODE_TYPE
-                ).singleNodeValue;
+                const card = cards.find(c => c.querySelector(`[data-test-license-name="${l.name}"]`));
+                if (!card) throw Error(`Failed to find historical license card for "${l.name}"`);
 
-                if (!name) throw Error(`Expected inactive license node for name ${l.name}`);
-
-                const status = document.evaluate(
-                  `//*[@id="agreement-inactive-licenses"]//div[.="${l.status}"]`,
-                  document,
-                  null,
-                  XPathResult.FIRST_ORDERED_NODE_TYPE
-                ).singleNodeValue;
-
-                if (!status) throw Error(`Expected inactive license node for status ${l.status}`);
+                const name = card.querySelector(`[data-test-license-name="${l.name}"]`).innerText;
+                if (name !== l.name) throw Error(`Expected license name to be "${l.name}"`);
               });
-            }, inactiveLicenses)
+            }, historicalLicenses)
+            .then(done)
+            .catch(done);
+        });
+
+        it('should find historical license\'s three amendments', done => {
+          nightmare
+            .evaluate(() => {
+              if (document.querySelectorAll('#agreement-historical-license-0-amendments [data-row-index]').length !== 3) {
+                throw Error('Expected to find a list of three amendments');
+              }
+            })
+            .then(done)
+            .catch(done);
+        });
+      }
+
+      const futureLicenses = licenses.filter(l => l.status === 'Future');
+      if (futureLicenses) {
+        it('should find future licenses', done => {
+          nightmare
+            .evaluate(expected => {
+              const cards = [...document.querySelectorAll('#futureLicenses [data-test-linked-license-card]')];
+
+              expected.forEach(l => {
+                const card = cards.find(c => c.querySelector(`[data-test-license-name="${l.name}"]`));
+                if (!card) throw Error(`Failed to find future license card for "${l.name}"`);
+
+                const name = card.querySelector(`[data-test-license-name="${l.name}"]`).innerText;
+                if (name !== l.name) throw Error(`Expected license name to be "${l.name}"`);
+              });
+            }, futureLicenses)
+            .then(done)
+            .catch(done);
+        });
+
+        it('should find future license\'s three amendments', done => {
+          nightmare
+            .evaluate(() => {
+              if (document.querySelectorAll('#agreement-future-license-0-amendments [data-row-index]').length !== 3) {
+                throw Error('Expected to find a list of three amendments');
+              }
+            })
             .then(done)
             .catch(done);
         });
@@ -231,7 +348,7 @@ module.exports.test = (uiTestCtx) => {
             const nameElement = document.querySelector('[data-test-license-name]');
             if (!nameElement) return false;
 
-            return nameElement.innerText === licenseName;
+            return nameElement.innerText.trim() === licenseName;
           }, licenses[0].name)
           .then(done)
           .catch(done);

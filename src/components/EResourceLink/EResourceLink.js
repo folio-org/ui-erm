@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
-import FolioLink from '../FolioLink';
-import isExternal from '../../util/isExternal';
+import { NoValue } from '@folio/stripes/components';
+import { isExternal, urls } from '../utilities';
 
 class EResourceLink extends React.Component {
   static propTypes = {
@@ -12,6 +13,7 @@ class EResourceLink extends React.Component {
       name: PropTypes.string,
       reference: PropTypes.string,
     }).isRequired,
+    searchString: PropTypes.string,
   }
 
   getName = (eresource) => {
@@ -19,38 +21,35 @@ class EResourceLink extends React.Component {
       return eresource.reference_object.label;
     }
 
-    return eresource.name;
+    const pti = eresource?._object?.pti ?? eresource?.pti;
+    const name = pti?.titleInstance?.name ?? eresource.name;
+
+    return name;
   }
 
   getPath = (eresource) => {
-    const { authority, id, reference } = eresource;
+    const { authority, reference } = eresource;
 
-    if (!authority && id) {
-      return `/erm/eresources/view/${id}`;
-    }
+    if (authority === 'EKB-PACKAGE') return urls.eholdingsPackageView(reference);
+    if (authority === 'EKB-TITLE') return urls.eholdingsResourceView(reference);
 
-    if (authority === 'EKB-PACKAGE') {
-      return `/eholdings/packages/${reference}`;
-    }
+    const pti = eresource?._object?.pti ?? eresource?.pti;
+    const id = pti?.titleInstance?.id ?? eresource.id;
 
-    if (authority === 'EKB-TITLE') {
-      return `/eholdings/resources/${reference}`;
-    }
-
-    return undefined;
+    return id ? urls.eresourceView(id) : undefined;
   }
 
   render() {
-    const { eresource, ...rest } = this.props;
+    const { eresource, searchString = '', ...rest } = this.props;
 
     const name = this.getName(eresource);
     const path = this.getPath(eresource);
-    if (!path) return name;
+    if (!path) return name || <NoValue />;
 
     return (
-      <FolioLink {...rest} path={this.getPath(eresource)}>
+      <Link {...rest} data-test-eresource-name to={`${this.getPath(eresource)}${searchString}`}>
         {name}
-      </FolioLink>
+      </Link>
     );
   }
 }

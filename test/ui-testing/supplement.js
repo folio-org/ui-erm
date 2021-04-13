@@ -2,9 +2,9 @@ const Docs = require('./docs');
 
 const DOCS = [{
   name: 'Misc Paper',
-  note: 'Signed and filed',
+  note: 'Signed',
   location: 'Filing Cabinet',
-  url: 'http://agreements.com/paper'
+  url: 'http://licenses.com/final'
 }, {
   name: 'Folder of secrets',
   url: 'http://agreements.com/secrets'
@@ -12,16 +12,16 @@ const DOCS = [{
 
 const EDITED_DOC = {
   docToEdit: DOCS[0].name,
-  name: 'Misc Paper v2',
-  note: 'Need to sign',
-  location: 'Printer Tray',
-  url: 'http://agreements.com/paper2'
+  ...DOCS[0],
+  appendName: ' v2',
+  appendNote: ' and filed',
+  appendLocation: ' in Archives',
+  appendUrl: '2'
 };
 
 const DELETED_DOC = DOCS[1].name;
 
 const DOCS_FIELD_NAME = 'supplementaryDocs';
-const DOCS_FORM_NAME = 'agreementFormSupplementaryInfo';
 
 module.exports.test = (uiTestCtx) => {
   Docs.test(
@@ -31,7 +31,6 @@ module.exports.test = (uiTestCtx) => {
       editedDoc: EDITED_DOC,
       deletedDoc: DELETED_DOC,
       docsFieldName: DOCS_FIELD_NAME,
-      formName: DOCS_FORM_NAME,
     },
   );
 };

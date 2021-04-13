@@ -1,13 +1,14 @@
-/* global describe, it, before, after, Nightmare */
+/* global before, after, Nightmare */
 
 const getCreateAgreementUrl = ({ authority, referenceId }) => (
-  `/erm/agreements?layer=create&authority=${authority}&referenceId=${referenceId}`
+  `/erm/agreements/create?authority=${authority}&referenceId=${referenceId}`
 );
 
 const getEHoldingsUrl = ({ authority, referenceId }) => {
   if (authority === 'EKB-PACKAGE') return `/eholdings/packages/${referenceId}`;
   if (authority === 'EKB-TITLE') return `/eholdings/resources/${referenceId}`;
-}
+  return null;
+};
 
 module.exports.test = (uiTestCtx) => {
   describe('ui-agreements: eholdings integration', function test() {
@@ -15,7 +16,7 @@ module.exports.test = (uiTestCtx) => {
     const nightmare = new Nightmare(config.nightmare);
 
     console.log('\n    These tests require eHoldings installed and configured with EBSCO keys.');
-    console.log('    Ensure it is installed, running, and functional before expecting these tests to pass.')
+    console.log('    Ensure it is installed, running, and functional before expecting these tests to pass.');
 
     const resources = [{
       authority: 'EKB-PACKAGE',
@@ -23,7 +24,7 @@ module.exports.test = (uiTestCtx) => {
     }, {
       authority: 'EKB-TITLE',
       referenceId: '120853-2337939-11517622'
-    }]
+    }];
 
     const runValues = resources.map(resource => ({
       name: `EHoldings Agreement #${Math.round(Math.random() * 100000)}`,
@@ -35,7 +36,7 @@ module.exports.test = (uiTestCtx) => {
 
     this.timeout(Number(config.test_timeout));
 
-    describe(`create new agreements with authority/referenceId > check agreement lines`, () => {
+    describe('create new agreements with authority/referenceId > check agreement lines', () => {
       before((done) => {
         helpers.login(nightmare, config, done);
       });
@@ -53,8 +54,8 @@ module.exports.test = (uiTestCtx) => {
               .waitUntilNetworkIdle(1000)
 
               .insert('#edit-agreement-name', values.name)
-              .click('#edit-agreement-start-date')
-              .type('#edit-agreement-start-date', '\u000d') // "Enter" selects current date
+              .click('#period-start-date-0')
+              .type('#period-start-date-0', '\u000d') // "Enter" selects current date
               .type('#edit-agreement-status', 'active')
               .then(done)
               .catch(done);
@@ -62,10 +63,9 @@ module.exports.test = (uiTestCtx) => {
 
           it('should have auto-added agreement line with information', done => {
             nightmare
-              .click('#accordion-toggle-button-agreementFormLines')
               .evaluate(expected => {
                 if (!document.querySelector('[data-test-ag-line-number]')) {
-                  throw Error(`Failed to find expected agreement line for "${expected.referenceId}".`)
+                  throw Error(`Failed to find expected agreement line for "${expected.referenceId}".`);
                 }
 
                 if (!document.querySelector('[data-test-ag-line-name]').textContent) {
@@ -87,6 +87,10 @@ module.exports.test = (uiTestCtx) => {
                 if (!document.querySelector('[data-test-ag-line-provider]').textContent) {
                   throw Error('Expected to find a resource provider.');
                 }
+
+                if (!document.querySelector('[data-test-ag-line-coverage]').textContent) {
+                  throw Error('Expected to find default coverage.');
+                }
               }, values)
               .then(done)
               .catch(done);
@@ -94,17 +98,16 @@ module.exports.test = (uiTestCtx) => {
 
           it(`should create agreement ${values.name}`, done => {
             nightmare
-              .click('#clickable-createagreement')
+              .click('#clickable-create-agreement')
               .wait('[data-test-agreement-info]')
               .waitUntilNetworkIdle(2000)
+              .click('#clickable-expand-all')
               .then(done)
               .catch(done);
           });
 
           it('should have resource info in agreement lines list', done => {
             nightmare
-              .wait('#accordion-toggle-button-eresourcesAgreementLines')
-              .click('#accordion-toggle-button-eresourcesAgreementLines')
               .evaluate(expected => {
                 const cells = [...document.querySelectorAll('#agreement-lines [aria-rowindex="2"] [role="gridcell"]')];
 

@@ -10,3 +10,6 @@ ModuleDescriptor.json
 /.tern-project
 /.settings
 .project
+
+/artifacts
+junit.xml
